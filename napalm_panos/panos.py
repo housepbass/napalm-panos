@@ -796,3 +796,62 @@ class PANOSDriver(NetworkDriver):  # pylint: disable=too-many-instance-attribute
                 ip_interfaces.update(ip_info)
 
         return ip_interfaces
+
+    def _get_environmentals(self):
+        """get temps/fans/powers"""
+        candidate_command = "<show><system><environmentals></environmentals></system></show>"
+        self.device.op(cmd=candidate_command)
+        raw = str(self.device.xml_root())
+        t=xmltodict.parse(raw)
+        data=t["response"]["result"]
+        return data
+
+    def _get_resources(self):
+         candidate_command = "<show><system><resources></resources></system></show>"
+         self.device.op(cmd=candidate_command)
+         raw = str(self.device.xml_root())
+         t=xmltodict.parse(raw)
+         running=t["response"]["result"]
+         return running
+
+    def get_environment(self):
+        fan_dict = {}
+        temp_dict = {}
+        cpu_dict = {}
+        psu_dict = {}
+        mem_dict = {}
+        t = self._get_environmentals()
+        # parse out t to get temps/fans/power
+        for fan in t["fan"]["Slot1"]["entry"]:
+            value = "True"
+            if fan["alarm"] == "True":
+                value = "False"
+            fan_dict.update({fan["description"]: { "status": value }})
+
+        for temp in t["thermal"]["Slot1"]["entry"]:
+            temp_dict.update({temp["description"]: { "temperature": temp["DegreesC"] }})
+
+        for power in t["power-supply"]["Slot1"]["entry"]:
+            value = "True"
+            if power["alarm"] == "True":
+                value = "False"
+            psu_dict.update({power["description"]: { "status": value }})
+
+        t = self._get_resources()
+        x=t.split("\n")
+        tcpu=x[2].split()
+        tmem=x[3].split()
+        mem_dict.update({'available_ram': tmem[5], 'used_ram': tmem[7]})
+        cpu_dict.update({'user': {'%usage': tcpu[1]}})
+        cpu_dict.update({'system': {'%usage': tcpu[3]}})
+        cpu_dict.update({'nice': {'%usage': tcpu[5]}})
+        cpu_dict.update({'idle': {'%usage': tcpu[7]}})
+
+        environment = {
+            'fans': fan_dict,
+            'temperature': temp_dict,
+            'power': psu_dict,
+            'cpu': cpu_dict,
+            'memory': mem_dict
+        }
+        return environment
