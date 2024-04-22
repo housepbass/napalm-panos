@@ -61,7 +61,7 @@ This table identifies the currently available getters and the support for each:
 | get_bgp_neighbors         | ❌        |
 | get_bgp_neighbors_detail  | ❌        |
 | get_config                | ✅        |
-| get_environment           | ❌        |
+| get_environment           | ✅        |
 | get_facts                 | ✅        |
 | get_firewall_policies     | ❌        |
 | get_interfaces            | ✅        |
