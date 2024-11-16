@@ -26,7 +26,7 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.13"
+python = ">=3.8,<3.14"
 cryptography = "*"
 napalm = "^4.0.0"
 lxml = "^5.0.0"
